@@ -19,6 +19,8 @@ h2{font-size:20px;font-weight:600;color:#1a1a1a}
 .btn:active{transform:scale(0.98)}
 .btn-primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
 .btn-primary:hover{background:#333}
+.btn-danger{background:#E24B4A;color:#fff;border-color:#E24B4A}
+.btn-danger:hover{background:#c03a39}
 .btn-sync{background:#fff;border:1px solid #1D9E75;color:#1D9E75;border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer}
 .btn-sync:hover{background:#E1F5EE}
 .btn-sync:disabled{opacity:0.4;cursor:not-allowed}
@@ -51,6 +53,8 @@ td{padding:11px 12px;vertical-align:middle}
 .b-green{background:#EAF3DE;color:#3B6D11}
 .b-purple{background:#EEEDFE;color:#3C3489}
 .b-gray{background:#F1EFE8;color:#5F5E5A}
+.b-teal{background:#E1F5EE;color:#1D9E75}
+.b-pink{background:#FDE8F4;color:#9C2C6D}
 .d-red{color:#E24B4A;font-weight:600}
 .d-amber{color:#BA7517;font-weight:600}
 .done-row{opacity:0.38}
@@ -58,8 +62,10 @@ td{padding:11px 12px;vertical-align:middle}
 .action-btn:hover{background:#EAF3DE;color:#3B6D11;border-color:#3B6D11}
 .del-btn{background:transparent;border:none;cursor:pointer;color:#ccc;padding:3px 6px;font-size:15px;line-height:1}
 .del-btn:hover{color:#E24B4A}
-.ref-cell{font-family:'SF Mono',Menlo,monospace;font-size:11px;color:#888}
+.ref-cell{font-family:'SF Mono',Menlo,monospace;font-size:11px;color:#185FA5;cursor:pointer;text-decoration:underline;text-decoration-color:transparent;transition:text-decoration-color 0.15s}
+.ref-cell:hover{text-decoration-color:#185FA5}
 .empty{text-align:center;padding:3.5rem;color:#aaa;font-size:14px}
+/* Modal */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center;padding:1rem}
 .modal-bg.open{display:flex}
 .modal{background:#fff;border-radius:16px;padding:1.5rem;width:440px;max-width:100%;border:1px solid #eee;max-height:90vh;overflow-y:auto}
@@ -69,228 +75,363 @@ td{padding:11px 12px;vertical-align:middle}
 .form-row input,.form-row select{width:100%;padding:9px 11px;border:1px solid #ddd;border-radius:8px;font-size:14px;background:#fff;color:#1a1a1a;-webkit-appearance:none}
 .form-row input:focus,.form-row select:focus{outline:none;border-color:#888}
 .modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:1rem}
+.modal-btns-left{display:flex;gap:8px;justify-content:space-between;margin-top:1rem}
+/* Toast */
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:11px 22px;border-radius:10px;font-size:13px;z-index:200;opacity:0;transition:opacity 0.25s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
 @media(max-width:600px){
-.stats{grid-template-columns:repeat(2,1fr)}
-.search{width:130px}
-h2{font-size:17px}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .search{width:130px}
+  h2{font-size:17px}
 }
 </style>
 </head>
 <body>
 <div class="wrap">
-<div class="top">
-<div style="display:flex;align-items:baseline">
-<h2>기한 관리<span class="sub">26년 3월 기준</span></h2>
+  <div class="top">
+    <div style="display:flex;align-items:baseline">
+      <h2>기한 관리<span class="sub" id="date-sub"></span></h2>
+    </div>
+    <div class="sync-row">
+      <div class="sync-status"><span class="dot loading" id="sync-dot"></span><span id="sync-label">연결 중...</span></div>
+      <button class="btn-sync" id="sync-btn" onclick="syncFromSheet()" disabled>새로고침</button>
+      <button class="btn btn-primary" onclick="openModal(-1)">+ 추가</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-label">D-7 이내</div><div class="stat-num c-red" id="s-urgent">0</div></div>
+    <div class="stat"><div class="stat-label">D-30 이내</div><div class="stat-num c-amber" id="s-soon">0</div></div>
+    <div class="stat"><div class="stat-label">전체 진행중</div><div class="stat-num c-blue" id="s-total">0</div></div>
+    <div class="stat"><div class="stat-label">완료</div><div class="stat-num c-gray" id="s-done">0</div></div>
+  </div>
+
+  <div class="filters">
+    <button class="chip active" data-f="전체" onclick="setFilter(this)">전체</button>
+    <button class="chip" data-f="국내신건" onclick="setFilter(this)">국내신건</button>
+    <button class="chip" data-f="국내OA" onclick="setFilter(this)">국내OA</button>
+    <button class="chip" data-f="국내등록검토" onclick="setFilter(this)">국내등록검토</button>
+    <button class="chip" data-f="국내분할" onclick="setFilter(this)">국내분할</button>
+    <button class="chip" data-f="국내자진보정" onclick="setFilter(this)">국내자진보정</button>
+    <button class="chip" data-f="해외OA" onclick="setFilter(this)">해외OA</button>
+    <button class="chip" data-f="해외등록검토" onclick="setFilter(this)">해외등록검토</button>
+    <button class="chip" data-f="해외출원" onclick="setFilter(this)">해외출원</button>
+    <button class="chip" data-f="해외분할" onclick="setFilter(this)">해외분할</button>
+    <button class="chip" data-f="해외자진보정" onclick="setFilter(this)">해외자진보정</button>
+    <input class="search" id="search" placeholder="REF 또는 담당자 검색..." oninput="render()">
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>LGE REF</th><th>업무유형</th><th>업무기한</th><th>마감일</th><th>연장</th><th>담당자</th><th>D-day</th><th>상태</th><th></th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div id="empty" class="empty" style="display:none">항목이 없습니다.</div>
+  </div>
 </div>
-<div class="sync-row">
-<div class="sync-status"><span class="dot loading" id="sync-dot"></span><span id="sync-label">연결 중...</span></div>
-<button class="btn-sync" id="sync-btn" onclick="syncFromSheet()" disabled>새로고침</button>
-<button class="btn btn-primary" onclick="openModal()">+ 추가</button>
-</div>
-</div>
-<div class="stats">
-<div class="stat"><div class="stat-label">D-7 이내</div><div class="stat-num c-red" id="s-urgent">0</div></div>
-<div class="stat"><div class="stat-label">D-30 이내</div><div class="stat-num c-amber" id="s-soon">0</div></div>
-<div class="stat"><div class="stat-label">전체 진행중</div><div class="stat-num c-blue" id="s-total">0</div></div>
-<div class="stat"><div class="stat-label">완료</div><div class="stat-num c-gray" id="s-done">0</div></div>
-</div>
-<div class="filters">
-<button class="chip active" data-f="전체" onclick="setFilter(this)">전체</button>
-<button class="chip" data-f="국내OA" onclick="setFilter(this)">국내OA</button>
-<button class="chip" data-f="해외OA" onclick="setFilter(this)">해외OA</button>
-<button class="chip" data-f="등록검토" onclick="setFilter(this)">등록검토</button>
-<button class="chip" data-f="국내분할" onclick="setFilter(this)">국내분할</button>
-<input class="search" id="search" placeholder="REF 또는 담당자 검색..." oninput="render()">
-</div>
-<div class="table-wrap">
-<table>
-<thead><tr>
-<th>LGE REF</th><th>업무유형</th><th>업무기한</th><th>마감일</th><th>연장</th><th>담당자</th><th>D-day</th><th>상태</th><th></th>
-</tr></thead>
-<tbody id="tbody"></tbody>
-</table>
-<div id="empty" class="empty" style="display:none">항목이 없습니다.</div>
-</div>
-</div>
+
+<!-- Add / Edit Modal -->
 <div class="modal-bg" id="modal-bg">
-<div class="modal">
-<h3>기한 추가</h3>
-<div class="form-row"><label>LGE REF</label><input id="f-ref" placeholder="예: 19LWW255KR01"></div>
-<div class="form-row"><label>업무유형</label>
-<select id="f-type">
-<option>국내OA</option><option>국내신건</option><option>자진보정</option>
-<option>해외OA</option><option>등록검토</option><option>국내분할</option>
-</select>
+  <div class="modal">
+    <h3 id="modal-title">기한 추가</h3>
+    <div class="form-row"><label>LGE REF</label><input id="f-ref" placeholder="예: 19LWW255KR01"></div>
+    <div class="form-row"><label>업무유형</label>
+      <select id="f-type">
+        <option value="국내신건">국내신건</option>
+        <option value="국내OA">국내OA</option>
+        <option value="국내등록검토">국내등록검토</option>
+        <option value="국내분할">국내분할</option>
+        <option value="국내자진보정">국내자진보정</option>
+        <option value="해외OA">해외OA</option>
+        <option value="해외등록검토">해외등록검토</option>
+        <option value="해외출원">해외출원</option>
+        <option value="해외분할">해외분할</option>
+        <option value="해외자진보정">해외자진보정</option>
+      </select>
+    </div>
+    <div class="form-row"><label>업무기한</label><input type="date" id="f-work"></div>
+    <div class="form-row"><label>마감일 (법정기한)</label><input type="date" id="f-dead"></div>
+    <div class="form-row"><label>연장</label><input id="f-ext" placeholder="예: 2개월"></div>
+    <div class="form-row"><label>담당자</label><input id="f-person" placeholder="예: 손구영 책임님"></div>
+    <div class="modal-btns-left">
+      <div>
+        <button class="btn btn-danger" id="modal-del-btn" onclick="deleteFromModal()" style="display:none">삭제</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn" onclick="closeModal()">취소</button>
+        <button class="btn btn-primary" id="modal-save-btn" onclick="saveItem()">추가</button>
+      </div>
+    </div>
+  </div>
 </div>
-<div class="form-row"><label>업무기한</label><input type="date" id="f-work"></div>
-<div class="form-row"><label>마감일 (법정기한)</label><input type="date" id="f-dead"></div>
-<div class="form-row"><label>연장</label><input id="f-ext" placeholder="예: 2개월"></div>
-<div class="form-row"><label>담당자</label><input id="f-person" placeholder="예: 손구영 책임님"></div>
-<div class="modal-btns">
-<button class="btn" onclick="closeModal()">취소</button>
-<button class="btn btn-primary" onclick="addItem()">추가</button>
-</div>
-</div>
-</div>
+
 <div class="toast" id="toast"></div>
+
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyIJo-Us95YZ0m5XGCkRiofb4eWA5YOBh0YVYJMvIzlidAFqt1CpKZ-FaChhhS-iu4oxg/exec';
-const SOURCE = [{"ref":"19LWW255KR01D1D1","type":"국내OA","workDate":"2026-02-23","deadDate":"2026-04-23","ext":"","person":"손구영 책임님","done":false},{"ref":"20LWV082KR01D2","type":"국내OA","workDate":"2026-02-13","deadDate":"2026-04-02","ext":"","person":"김민철 책임님","done":false},{"ref":"20LWV082KR01D1","type":"국내OA","workDate":"2026-02-13","deadDate":"2026-04-02","ext":"","person":"김민철 책임님","done":false},{"ref":"19LWW256KR01D1D1","type":"국내OA","workDate":"2026-02-24","deadDate":"2026-04-14","ext":"","person":"손구영 책임님","done":false},{"ref":"19REF165KR01D1","type":"국내OA","workDate":"2026-04-10","deadDate":"2026-06-11","ext":"","person":"권영철 책임님","done":false},{"ref":"19LWW254KR01D1D1","type":"국내OA","workDate":"2026-05-14","deadDate":"2026-07-18","ext":"","person":"손구영 책임님","done":false},{"ref":"19LWW251EP03D1","type":"해외OA","workDate":"2025-12-11","deadDate":"2026-05-12","ext":"","person":"손구영 책임님","done":false},{"ref":"19LWW254EP03D1D1","type":"해외OA","workDate":"2026-01-07","deadDate":"2026-05-26","ext":"","person":"손구영 책임님","done":false},{"ref":"18REF068EP03D1D1","type":"해외OA","workDate":"2026-01-09","deadDate":"2026-06-17","ext":"","person":"권영철 책임님","done":false},{"ref":"19LWW254EP03D1D2","type":"해외OA","workDate":"","deadDate":"2026-06-03","ext":"","person":"손구영 책임님","done":false},{"ref":"20LWW069EP03D1","type":"해외OA","workDate":"2026-01-28","deadDate":"2026-06-17","ext":"","person":"손구영 책임님","done":false},{"ref":"20LWW069EP03D2","type":"해외OA","workDate":"2026-01-28","deadDate":"2026-06-24","ext":"","person":"손구영 책임님","done":false},{"ref":"20LWW069EP03D3","type":"해외OA","workDate":"2026-01-28","deadDate":"2026-06-17","ext":"","person":"손구영 책임님","done":false},{"ref":"20LWW069EP03D4","type":"해외OA","workDate":"2026-01-28","deadDate":"2026-06-17","ext":"","person":"손구영 책임님","done":false},{"ref":"20LWW069EP03D5","type":"해외OA","workDate":"2026-01-28","deadDate":"2026-06-17","ext":"","person":"손구영 책임님","done":false},{"ref":"20LWW069EP03D6","type":"해외OA","workDate":"2026-01-28","deadDate":"2026-06-17","ext":"","person":"손구영 책임님","done":false},{"ref":"19LWW257EP04D1","type":"해외OA","workDate":"2026-01-28","deadDate":"2026-06-17","ext":"","person":"손구영 책임님","done":false},{"ref":"14FREF018EP03D1","type":"해외OA","workDate":"2026-02-04","deadDate":"2026-04-05","ext":"","person":"권영철 책임님","done":false},{"ref":"25REF190EP03","type":"해외OA","workDate":"2026-03-03","deadDate":"2026-09-11","ext":"","person":"김도훈 책임님","done":false},{"ref":"19LWW245CN04D1","type":"해외OA","workDate":"2026-03-27","deadDate":"2026-04-24","ext":"","person":"손구영 책임님","done":false},{"ref":"19LWW260CN04D1","type":"해외OA","workDate":"2026-03-21","deadDate":"2026-04-18","ext":"","person":"손구영 책임님","done":false},{"ref":"19LWW260CN04D2","type":"해외OA","workDate":"2026-03-21","deadDate":"2026-04-18","ext":"","person":"손구영 책임님","done":false},{"ref":"22LWP090US02","type":"해외OA","workDate":"2026-03-25","deadDate":"2026-04-22","ext":"","person":"배원직 책임님","done":false},{"ref":"24REF176EP03","type":"해외OA","workDate":"2026-04-09","deadDate":"2026-07-10","ext":"","person":"김도훈 책임님","done":false},{"ref":"25REF131EP03","type":"해외OA","workDate":"2026-04-09","deadDate":"2026-07-10","ext":"","person":"김도훈 책임님","done":false},{"ref":"19LWW253US03C2","type":"해외OA","workDate":"2026-04-04","deadDate":"2026-05-02","ext":"","person":"손구영 책임님","done":false},{"ref":"19LWW254EP03D1","type":"해외OA","workDate":"2026-04-20","deadDate":"2026-06-02","ext":"","person":"손구영 책임님","done":false},{"ref":"19LWW258CN04D1","type":"해외OA","workDate":"2026-05-12","deadDate":"2026-06-11","ext":"","person":"손구영 책임님","done":false},{"ref":"19LWW267CN05D2","type":"해외OA","workDate":"2026-05-06","deadDate":"2026-06-03","ext":"","person":"손구영 책임님","done":false},{"ref":"19LWW267CN05D3","type":"해외OA","workDate":"2026-05-07","deadDate":"2026-06-04","ext":"","person":"손구영 책임님","done":false},{"ref":"22LWP090EP04","type":"해외OA","workDate":"2026-05-13","deadDate":"2026-07-02","ext":"","person":"배원직 책임님","done":false},{"ref":"19LWW254US02C1","type":"해외OA","workDate":"2026-05-14","deadDate":"2026-06-11","ext":"","person":"손구영 책임님","done":false},{"ref":"19LWW253US03C1","type":"등록검토","workDate":"2026-01-16","deadDate":"","ext":"","person":"","done":false},{"ref":"25LWP035EP03","type":"등록검토","workDate":"2026-01-18","deadDate":"2025-03-18","ext":"","person":"문중석 선임님","done":false},{"ref":"25LWP035US02","type":"등록검토","workDate":"2026-01-18","deadDate":"2025-03-18","ext":"","person":"문중석 선임님","done":false},{"ref":"25LWP035CN04","type":"등록검토","workDate":"2026-01-18","deadDate":"2025-03-18","ext":"","person":"문중석 선임님","done":false},{"ref":"25LWP036EP03","type":"등록검토","workDate":"2026-01-18","deadDate":"2025-03-18","ext":"","person":"문중석 선임님","done":false},{"ref":"25LWP036US02","type":"등록검토","workDate":"2026-01-18","deadDate":"2025-03-18","ext":"","person":"문중석 선임님","done":false},{"ref":"25LWP036CN04","type":"등록검토","workDate":"2026-01-18","deadDate":"2025-03-18","ext":"","person":"문중석 선임님","done":false},{"ref":"19LWW253EP04D1D1","type":"국내분할","workDate":"2026-01-23","deadDate":"2026-05-23","ext":"","person":"손구영 책임님","done":false}];
+
+const SOURCE = [{"ref":"19LWW255KR01D1D1","type":"국내OA","workDate":"2026-02-23","deadDate":"2026-04-23","ext":"","person":"손구영 책임님","done":false},{"ref":"20LWV082KR01D2","type":"국내OA","workDate":"2026-02-13","deadDate":"2026-04-02","ext":"","person":"김민철 책임님","done":false},{"ref":"20LWV082KR01D1","type":"국내OA","workDate":"2026-02-13","deadDate":"2026-04-02","ext":"","person":"김민철 책임님","done":false},{"ref":"19LWW256KR01D1D1","type":"국내OA","workDate":"2026-02-24","deadDate":"2026-04-14","ext":"","person":"손구영 책임님","done":false},{"ref":"19REF165KR01D1","type":"국내OA","workDate":"2026-04-10","deadDate":"2026-06-11","ext":"","person":"권영철 책임님","done":false},{"ref":"19LWW254KR01D1D1","type":"국내OA","workDate":"2026-05-14","deadDate":"2026-07-18","ext":"","person":"손구영 책임님","done":false},{"ref":"19LWW251EP03D1","type":"해외OA","workDate":"2025-12-11","deadDate":"2026-05-12","ext":"","person":"손구영 책임님","done":false},{"ref":"19LWW254EP03D1D1","type":"해외OA","workDate":"2026-01-07","deadDate":"2026-05-26","ext":"","person":"손구영 책임님","done":false},{"ref":"18REF068EP03D1D1","type":"해외OA","workDate":"2026-01-09","deadDate":"2026-06-17","ext":"","person":"권영철 책임님","done":false},{"ref":"19LWW254EP03D1D2","type":"해외OA","workDate":"","deadDate":"2026-06-03","ext":"","person":"손구영 책임님","done":false},{"ref":"20LWW069EP03D1","type":"해외OA","workDate":"2026-01-28","deadDate":"2026-06-17","ext":"","person":"손구영 책임님","done":false},{"ref":"20LWW069EP03D2","type":"해외OA","workDate":"2026-01-28","deadDate":"2026-06-24","ext":"","person":"손구영 책임님","done":false},{"ref":"20LWW069EP03D3","type":"해외OA","workDate":"2026-01-28","deadDate":"2026-06-17","ext":"","person":"손구영 책임님","done":false},{"ref":"20LWW069EP03D4","type":"해외OA","workDate":"2026-01-28","deadDate":"2026-06-17","ext":"","person":"손구영 책임님","done":false},{"ref":"20LWW069EP03D5","type":"해외OA","workDate":"2026-01-28","deadDate":"2026-06-17","ext":"","person":"손구영 책임님","done":false},{"ref":"20LWW069EP03D6","type":"해외OA","workDate":"2026-01-28","deadDate":"2026-06-17","ext":"","person":"손구영 책임님","done":false},{"ref":"19LWW257EP04D1","type":"해외OA","workDate":"2026-01-28","deadDate":"2026-06-17","ext":"","person":"손구영 책임님","done":false},{"ref":"14FREF018EP03D1","type":"해외OA","workDate":"2026-02-04","deadDate":"2026-04-05","ext":"","person":"권영철 책임님","done":false},{"ref":"25REF190EP03","type":"해외OA","workDate":"2026-03-03","deadDate":"2026-09-11","ext":"","person":"김도훈 책임님","done":false},{"ref":"19LWW245CN04D1","type":"해외OA","workDate":"2026-03-27","deadDate":"2026-04-24","ext":"","person":"손구영 책임님","done":false},{"ref":"19LWW260CN04D1","type":"해외OA","workDate":"2026-03-21","deadDate":"2026-04-18","ext":"","person":"손구영 책임님","done":false},{"ref":"19LWW260CN04D2","type":"해외OA","workDate":"2026-03-21","deadDate":"2026-04-18","ext":"","person":"손구영 책임님","done":false},{"ref":"22LWP090US02","type":"해외OA","workDate":"2026-03-25","deadDate":"2026-04-22","ext":"","person":"배원직 책임님","done":false},{"ref":"24REF176EP03","type":"해외OA","workDate":"2026-04-09","deadDate":"2026-07-10","ext":"","person":"김도훈 책임님","done":false},{"ref":"25REF131EP03","type":"해외OA","workDate":"2026-04-09","deadDate":"2026-07-10","ext":"","person":"김도훈 책임님","done":false},{"ref":"19LWW253US03C2","type":"해외OA","workDate":"2026-04-04","deadDate":"2026-05-02","ext":"","person":"손구영 책임님","done":false},{"ref":"19LWW254EP03D1","type":"해외OA","workDate":"2026-04-20","deadDate":"2026-06-02","ext":"","person":"손구영 책임님","done":false},{"ref":"19LWW258CN04D1","type":"해외OA","workDate":"2026-05-12","deadDate":"2026-06-11","ext":"","person":"손구영 책임님","done":false},{"ref":"19LWW267CN05D2","type":"해외OA","workDate":"2026-05-06","deadDate":"2026-06-03","ext":"","person":"손구영 책임님","done":false},{"ref":"19LWW267CN05D3","type":"해외OA","workDate":"2026-05-07","deadDate":"2026-06-04","ext":"","person":"손구영 책임님","done":false},{"ref":"22LWP090EP04","type":"해외OA","workDate":"2026-05-13","deadDate":"2026-07-02","ext":"","person":"배원직 책임님","done":false},{"ref":"19LWW254US02C1","type":"해외OA","workDate":"2026-05-14","deadDate":"2026-06-11","ext":"","person":"손구영 책임님","done":false},{"ref":"19LWW253US03C1","type":"해외등록검토","workDate":"2026-01-16","deadDate":"","ext":"","person":"","done":false},{"ref":"19LWW253EP04D1D1","type":"해외분할","workDate":"2026-01-23","deadDate":"2026-05-23","ext":"","person":"손구영 책임님","done":false}];
+
 let items = [];
 let filter = '전체';
-function setStatus(state, msg) {
-document.getElementById('sync-dot').className = 'dot ' + state;
-document.getElementById('sync-label').textContent = msg;
-document.getElementById('sync-btn').disabled = (state === 'loading');
+let editIndex = -1;
+
+/* ── 날짜 헬퍼 ── */
+function getDateSubtitle() {
+  const now = new Date();
+  const yy = String(now.getFullYear()).slice(2);
+  const mm = now.getMonth() + 1;
+  const dd = now.getDate();
+  return yy + '년 ' + mm + '월' + dd + '일 기준';
 }
-async function syncFromSheet() {
-setStatus('loading', '불러오는 중...');
-try {
-const res = await fetch(GAS_URL + '?action=getAll');
-const data = await res.json();
-if (data.error) throw new Error(data.error);
-if (data.items && data.items.length > 0) {
-items = data.items.map(function(r) {
-return {
-ref: r.ref||'', type: r.type||'국내OA',
-workDate: r.workDate||'', deadDate: r.deadDate||'',
-ext: r.ext||'', person: r.person||'',
-done: r.done==='TRUE'||r.done===true||r.done==='true'
-};
-});
-setStatus('ok', '구글 시트 연동됨');
-showToast('시트에서 '+items.length+'건 불러왔어요');
-} else {
-items = SOURCE.map(function(d){ return Object.assign({},d); });
-await pushToSheet();
-setStatus('ok', '구글 시트 연동됨');
-showToast('초기 데이터를 시트에 저장했어요');
+function currentYM() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
 }
-render();
-} catch(e) {
-setStatus('err', '연동 실패');
-items = SOURCE.map(function(d){ return Object.assign({},d); });
-render();
-showToast('시트 연결 실패 — 로컬 데이터로 표시해요');
-}
-}
-async function pushToSheet() {
-setStatus('loading', '저장 중...');
-try {
-const res = await fetch(GAS_URL, {
-method: 'POST',
-headers: {'Content-Type': 'text/plain'},
-body: JSON.stringify({action: 'save', data: items})
-});
-const data = await res.json();
-if (data.error) throw new Error(data.error);
-setStatus('ok', '구글 시트 연동됨');
-} catch(e) {
-setStatus('err', '저장 실패');
-showToast('저장 실패. 다시 시도해주세요.');
-}
-}
-function today() { const d=new Date(); d.setHours(0,0,0,0); return d; }
+function today() { const d = new Date(); d.setHours(0,0,0,0); return d; }
 function dday(ds) {
-if(!ds) return null;
-const t=today(), tgt=new Date(ds); tgt.setHours(0,0,0,0);
-return Math.round((tgt-t)/86400000);
+  if (!ds) return null;
+  const t = today(), tgt = new Date(ds); tgt.setHours(0,0,0,0);
+  return Math.round((tgt - t) / 86400000);
 }
-function ddLabel(d) { if(d===null) return '-'; if(d<0) return 'D+'+Math.abs(d); if(d===0) return 'D-day'; return 'D-'+d; }
-function ddClass(d) { if(d===null||d<0) return ''; if(d<=7) return 'd-red'; if(d<=30) return 'd-amber'; return ''; }
+function ddLabel(d) { if (d===null) return '-'; if (d<0) return 'D+'+Math.abs(d); if (d===0) return 'D-day'; return 'D-'+d; }
+function ddClass(d) { if (d===null||d<0) return ''; if (d<=7) return 'd-red'; if (d<=30) return 'd-amber'; return ''; }
 function fmtDate(ds) {
-if(!ds) return '-';
-try { const d=new Date(ds); return (d.getMonth()+1)+'월 '+d.getDate()+'일'; } catch(e){ return ds; }
+  if (!ds) return '-';
+  try { const d = new Date(ds); return (d.getMonth()+1)+'월 '+d.getDate()+'일'; } catch(e){ return ds; }
 }
+function isoDate(ds) {
+  // ISO UTC 형식 "2026-01-27T15:00:00.000Z" → "2026-01-28" (KST)
+  if (!ds) return '';
+  if (ds.length === 10) return ds; // 이미 YYYY-MM-DD
+  try {
+    const d = new Date(ds);
+    const kst = new Date(d.getTime() + 9 * 3600000);
+    return kst.toISOString().slice(0, 10);
+  } catch(e) { return ds.slice(0, 10); }
+}
+
+/* ── 배지 색상 ── */
 function typeBadge(t) {
-const m={'국내OA':'b-red','국내신건':'b-blue','자진보정':'b-green','해외OA':'b-amber','등록검토':'b-purple','국내분할':'b-gray'};
-return '<span class="badge '+(m[t]||'b-gray')+'">'+t+'</span>';
+  const m = {
+    '국내신건':'b-blue','국내OA':'b-red','국내등록검토':'b-purple',
+    '국내분할':'b-gray','국내자진보정':'b-green',
+    '해외OA':'b-amber','해외등록검토':'b-pink',
+    '해외출원':'b-blue','해외분할':'b-gray','해외자진보정':'b-green'
+  };
+  return '<span class="badge '+(m[t]||'b-gray')+'">'+t+'</span>';
 }
+
+/* ── 토스트 ── */
 function showToast(msg) {
-const el=document.getElementById('toast');
-el.textContent=msg; el.classList.add('show');
-setTimeout(function(){ el.classList.remove('show'); },2500);
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(function(){ el.classList.remove('show'); }, 2500);
 }
+
+/* ── 상태 ── */
+function setStatus(state, msg) {
+  document.getElementById('sync-dot').className = 'dot ' + state;
+  document.getElementById('sync-label').textContent = msg;
+  document.getElementById('sync-btn').disabled = (state === 'loading');
+}
+
+/* ── Google Sheets 연동 ── */
+async function syncFromSheet() {
+  setStatus('loading', '불러오는 중...');
+  try {
+    const res = await fetch(GAS_URL + '?action=getAll');
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    if (data.items && data.items.length > 0) {
+      items = data.items.map(function(r) {
+        return {
+          ref: r.ref||'', type: r.type||'국내OA',
+          workDate: isoDate(r.workDate||''), deadDate: isoDate(r.deadDate||''),
+          ext: r.ext||'', person: r.person||'',
+          done: r.done==='TRUE'||r.done===true||r.done==='true',
+          doneDate: r.doneDate||''
+        };
+      });
+      // 지난달 완료 사건 자동 삭제
+      await autoCleanDone();
+      setStatus('ok', '구글 시트 연동됨');
+      showToast('시트에서 '+items.length+'건 불러왔어요');
+    } else {
+      items = SOURCE.map(function(d){ return Object.assign({doneDate:''}, d); });
+      await pushToSheet();
+      setStatus('ok', '구글 시트 연동됨');
+      showToast('초기 데이터를 시트에 저장했어요');
+    }
+    render();
+  } catch(e) {
+    setStatus('err', '연동 실패');
+    items = SOURCE.map(function(d){ return Object.assign({doneDate:''}, d); });
+    render();
+    showToast('시트 연결 실패 — 로컬 데이터로 표시해요');
+  }
+}
+
+async function pushToSheet() {
+  setStatus('loading', '저장 중...');
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'text/plain'},
+      body: JSON.stringify({action: 'save', data: items})
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    setStatus('ok', '구글 시트 연동됨');
+  } catch(e) {
+    setStatus('err', '저장 실패');
+    showToast('저장 실패. 다시 시도해주세요.');
+  }
+}
+
+/* ── 지난달 완료 사건 자동 삭제 ── */
+async function autoCleanDone() {
+  const ym = currentYM();
+  const before = items.length;
+  items = items.filter(function(item) {
+    // doneDate가 있고 현재 월보다 이전이면 삭제
+    if (item.done && item.doneDate && item.doneDate < ym) return false;
+    return true;
+  });
+  if (items.length < before) {
+    const removed = before - items.length;
+    await pushToSheet();
+    showToast('지난달 완료 사건 ' + removed + '건이 자동 정리됐습니다');
+  }
+}
+
+/* ── 렌더링 ── */
 function render() {
-const q=(document.getElementById('search').value||'').toLowerCase();
-let visible = filter==='전체' ? items.slice() : items.filter(function(i){ return i.type===filter; });
-if(q) visible=visible.filter(function(i){ return (i.ref||'').toLowerCase().includes(q)||(i.person||'').toLowerCase().includes(q); });
-const active=items.filter(function(i){ return !i.done; });
-document.getElementById('s-urgent').textContent=active.filter(function(i){ const d=dday(i.deadDate||i.workDate); return d!==null&&d>=0&&d<=7; }).length;
-document.getElementById('s-soon').textContent=active.filter(function(i){ const d=dday(i.deadDate||i.workDate); return d!==null&&d>=0&&d<=30; }).length;
-document.getElementById('s-total').textContent=active.length;
-document.getElementById('s-done').textContent=items.filter(function(i){ return i.done; }).length;
-const empty=document.getElementById('empty'), tb=document.getElementById('tbody');
-if(visible.length===0){ tb.innerHTML=''; empty.style.display='block'; return; }
-empty.style.display='none';
-const sorted=visible.slice().sort(function(a,b){
-if(a.done!==b.done) return a.done?1:-1;
-return new Date(a.deadDate||a.workDate||'9999')-new Date(b.deadDate||b.workDate||'9999');
-});
-tb.innerHTML=sorted.map(function(item){
-const ri=items.indexOf(item);
-const d=dday(item.deadDate||item.workDate);
-const dc=item.done?'':ddClass(d);
-const dl=item.done?'<span style="font-size:11px;color:#aaa">완료</span>':'<span class="'+dc+'">'+ddLabel(d)+'</span>';
-return '<tr class="'+(item.done?'done-row':'')+'">'+
-'<td class="ref-cell">'+(item.ref||'-')+'</td>'+
-'<td>'+typeBadge(item.type)+'</td>'+
-'<td style="font-size:12px;color:#888">'+fmtDate(item.workDate)+'</td>'+
-'<td style="font-size:12px;color:#888">'+fmtDate(item.deadDate)+'</td>'+
-'<td style="font-size:11px;color:#aaa">'+(item.ext||'')+'</td>'+
-'<td style="font-size:12px">'+(item.person||'-')+'</td>'+
-'<td>'+dl+'</td>'+
-'<td><span class="badge '+(item.done?'b-gray':'b-blue')+'">'+(item.done?'완료':'진행중')+'</span></td>'+
-'<td style="display:flex;gap:4px;align-items:center">'+
-(!item.done?'<button class="action-btn" onclick="markDone('+ri+')">완료</button>':'')+
-'<button class="del-btn" onclick="deleteItem('+ri+')">&times;</button>'+
-'</td></tr>';
-}).join('');
+  const q = (document.getElementById('search').value||'').toLowerCase();
+  let visible = filter==='전체' ? items.slice() : items.filter(function(i){ return i.type===filter; });
+  if (q) visible = visible.filter(function(i){ return (i.ref||'').toLowerCase().includes(q)||(i.person||'').toLowerCase().includes(q); });
+
+  const active = items.filter(function(i){ return !i.done; });
+  document.getElementById('s-urgent').textContent = active.filter(function(i){ const d=dday(i.deadDate||i.workDate); return d!==null&&d>=0&&d<=7; }).length;
+  document.getElementById('s-soon').textContent = active.filter(function(i){ const d=dday(i.deadDate||i.workDate); return d!==null&&d>=0&&d<=30; }).length;
+  document.getElementById('s-total').textContent = active.length;
+  document.getElementById('s-done').textContent = items.filter(function(i){ return i.done; }).length;
+
+  const empty = document.getElementById('empty'), tb = document.getElementById('tbody');
+  if (visible.length === 0){ tb.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display = 'none';
+
+  const sorted = visible.slice().sort(function(a,b){
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    return new Date(a.deadDate||a.workDate||'9999') - new Date(b.deadDate||b.workDate||'9999');
+  });
+
+  tb.innerHTML = sorted.map(function(item){
+    const ri = items.indexOf(item);
+    const d = dday(item.deadDate||item.workDate);
+    const dc = item.done ? '' : ddClass(d);
+    const dl = item.done ? '<span style="font-size:11px;color:#aaa">완료</span>' : '<span class="'+dc+'">'+ddLabel(d)+'</span>';
+    return '<tr class="'+(item.done?'done-row':'')+'">'+
+      '<td class="ref-cell" onclick="openModal('+ri+')">'+(item.ref||'-')+'</td>'+
+      '<td>'+typeBadge(item.type)+'</td>'+
+      '<td style="font-size:12px;color:#888">'+fmtDate(item.workDate)+'</td>'+
+      '<td style="font-size:12px;color:#888">'+fmtDate(item.deadDate)+'</td>'+
+      '<td style="font-size:11px;color:#aaa">'+(item.ext||'')+'</td>'+
+      '<td style="font-size:12px">'+(item.person||'-')+'</td>'+
+      '<td>'+dl+'</td>'+
+      '<td><span class="badge '+(item.done?'b-gray':'b-blue')+'">'+(item.done?'완료':'진행중')+'</span></td>'+
+      '<td style="display:flex;gap:4px;align-items:center">'+
+        (!item.done?'<button class="action-btn" onclick="markDone('+ri+')">완료</button>':'')+
+      '</td></tr>';
+  }).join('');
 }
-function openModal(){
-['f-ref','f-ext','f-person'].forEach(function(id){ document.getElementById(id).value=''; });
-const t=new Date(); t.setDate(t.getDate()+30);
-const ds=t.toISOString().slice(0,10);
-document.getElementById('f-work').value=ds;
-document.getElementById('f-dead').value=ds;
-document.getElementById('modal-bg').classList.add('open');
+
+/* ── 모달 (추가 / 수정 겸용) ── */
+function openModal(idx) {
+  editIndex = idx; // -1이면 추가, >=0이면 수정
+  const isEdit = idx >= 0;
+  document.getElementById('modal-title').textContent = isEdit ? '사건 수정' : '기한 추가';
+  document.getElementById('modal-save-btn').textContent = isEdit ? '저장' : '추가';
+  document.getElementById('modal-del-btn').style.display = isEdit ? 'inline-block' : 'none';
+
+  if (isEdit) {
+    const item = items[idx];
+    document.getElementById('f-ref').value = item.ref||'';
+    document.getElementById('f-type').value = item.type||'국내OA';
+    document.getElementById('f-work').value = item.workDate||'';
+    document.getElementById('f-dead').value = item.deadDate||'';
+    document.getElementById('f-ext').value = item.ext||'';
+    document.getElementById('f-person').value = item.person||'';
+  } else {
+    ['f-ref','f-ext','f-person'].forEach(function(id){ document.getElementById(id).value=''; });
+    const t = new Date(); t.setDate(t.getDate()+30);
+    const ds = t.toISOString().slice(0,10);
+    document.getElementById('f-work').value = ds;
+    document.getElementById('f-dead').value = ds;
+    document.getElementById('f-type').value = '국내OA';
+  }
+
+  document.getElementById('modal-bg').classList.add('open');
+  // ref 입력창에 포커스
+  setTimeout(function(){ document.getElementById('f-ref').focus(); }, 100);
 }
-function closeModal(){ document.getElementById('modal-bg').classList.remove('open'); }
-async function addItem(){
-const dead=document.getElementById('f-dead').value;
-if(!dead){ alert('마감일은 필수입니다.'); return; }
-items.push({
-ref:document.getElementById('f-ref').value.trim(),
-type:document.getElementById('f-type').value,
-workDate:document.getElementById('f-work').value||'',
-deadDate:dead,
-ext:document.getElementById('f-ext').value.trim(),
-person:document.getElementById('f-person').value.trim(),
-done:false
-});
-closeModal(); render();
-await pushToSheet();
-showToast('추가하고 저장했어요');
+
+function closeModal() { document.getElementById('modal-bg').classList.remove('open'); }
+
+async function saveItem() {
+  const dead = document.getElementById('f-dead').value;
+  if (!dead) { alert('마감일은 필수입니다.'); return; }
+  const newItem = {
+    ref: document.getElementById('f-ref').value.trim(),
+    type: document.getElementById('f-type').value,
+    workDate: document.getElementById('f-work').value||'',
+    deadDate: dead,
+    ext: document.getElementById('f-ext').value.trim(),
+    person: document.getElementById('f-person').value.trim(),
+    done: editIndex >= 0 ? items[editIndex].done : false,
+    doneDate: editIndex >= 0 ? (items[editIndex].doneDate||'') : ''
+  };
+  if (editIndex >= 0) {
+    items[editIndex] = newItem;
+    closeModal(); render();
+    await pushToSheet();
+    showToast('수정하고 저장했어요');
+  } else {
+    items.push(newItem);
+    closeModal(); render();
+    await pushToSheet();
+    showToast('추가하고 저장했어요');
+  }
 }
-async function markDone(i){
-items[i].done=true; render();
-await pushToSheet();
-showToast('완료 처리했어요');
+
+async function deleteFromModal() {
+  if (editIndex < 0) return;
+  if (confirm('이 사건을 삭제할까요?')) {
+    items.splice(editIndex, 1);
+    closeModal(); render();
+    await pushToSheet();
+    showToast('삭제했어요');
+  }
 }
-async function deleteItem(i){
-if(confirm('삭제할까요?')){
-items.splice(i,1); render();
-await pushToSheet();
-showToast('삭제했어요');
+
+async function markDone(i) {
+  items[i].done = true;
+  items[i].doneDate = currentYM(); // 완료 월 기록
+  render();
+  await pushToSheet();
+  showToast('완료 처리했어요');
 }
+
+function setFilter(el) {
+  document.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('active'); });
+  el.classList.add('active'); filter = el.dataset.f; render();
 }
-function setFilter(el){
-document.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('active'); });
-el.classList.add('active'); filter=el.dataset.f; render();
-}
-document.getElementById('modal-bg').addEventListener('click',function(e){ if(e.target===this) closeModal(); });
+
+/* ── 초기화 ── */
+document.getElementById('date-sub').textContent = getDateSubtitle();
+document.getElementById('modal-bg').addEventListener('click', function(e){ if (e.target===this) closeModal(); });
 syncFromSheet();
 </script>
 </body>
