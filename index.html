@@ -304,12 +304,6 @@ async function syncFromSheet() {
       await autoCleanDone();
       setStatus('ok','구글 시트 연동됨');
       showToast('시트에서 '+items.length+'건 불러왔어요');
-    } else {
-      items=SOURCE.map(function(d){ return Object.assign({},d); });
-      await pushToSheet();
-      setStatus('ok','구글 시트 연동됨');
-      showToast('초기 데이터를 시트에 저장했어요');
-    }
     render();
   } catch(e) {
     setStatus('err','연동 실패');
