@@ -301,15 +301,18 @@ async function syncFromSheet() {
           status:status, doneDate:r.doneDate||''
         };
       });
-      await autoCleanDone();
       setStatus('ok','구글 시트 연동됨');
       showToast('시트에서 '+items.length+'건 불러왔어요');
+    } else {
+      setStatus('ok','구글 시트 연동됨');
+      showToast('데이터가 없어요. + 추가로 입력해주세요');
+    }
     render();
   } catch(e) {
     setStatus('err','연동 실패');
-    items=SOURCE.map(function(d){ return Object.assign({},d); });
+    items=[];
     render();
-    showToast('시트 연결 실패 — 로컬 데이터로 표시해요');
+    showToast('시트 연결 실패. 새로고침을 눌러 다시 시도해주세요.');
   }
 }
 
@@ -327,20 +330,6 @@ async function pushToSheet() {
   } catch(e) {
     setStatus('err','저장 실패');
     showToast('저장 실패. 다시 시도해주세요.');
-  }
-}
-
-async function autoCleanDone() {
-  const ym=currentYM();
-  const before=items.length;
-  items=items.filter(function(item){
-    if(isDone(item)&&item.doneDate&&item.doneDate<ym) return false;
-    return true;
-  });
-  if(items.length<before) {
-    const removed=before-items.length;
-    await pushToSheet();
-    showToast('지난달 완료 사건 '+removed+'건이 자동 정리됐습니다');
   }
 }
 
