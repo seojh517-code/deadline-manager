@@ -288,7 +288,6 @@ async function syncFromSheet() {
           status:status, doneDate:r.doneDate||''
         };
       });
-      await autoCleanDone();
       setStatus('ok','구글 시트 연동됨');
       showToast('시트에서 '+items.length+'건 불러왔어요');
     } else {
