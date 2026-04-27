@@ -93,6 +93,11 @@ td{padding:11px 12px;vertical-align:middle}
 .ref-cell{font-family:'SF Mono',Menlo,monospace;font-size:11px;color:#185FA5;cursor:pointer;text-decoration:underline;text-decoration-color:transparent;transition:text-decoration-color 0.15s}
 .ref-cell:hover{text-decoration-color:#185FA5}
 .empty{text-align:center;padding:3.5rem;color:#aaa;font-size:14px}
+thead th.sortable{cursor:pointer;user-select:none}
+thead th.sortable:hover{color:#555;background:#efefef}
+thead th.sort-active{color:#1a1a1a}
+.sort-icon{margin-left:3px;font-size:10px;opacity:0.35}
+thead th.sort-active .sort-icon{opacity:0.85}
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center;padding:1rem}
 .modal-bg.open{display:flex}
 .modal{background:#fff;border-radius:16px;padding:1.5rem;width:440px;max-width:100%;border:1px solid #eee;max-height:90vh;overflow-y:auto}
@@ -108,6 +113,28 @@ td{padding:11px 12px;vertical-align:middle}
   .stats{grid-template-columns:repeat(2,1fr)}
   .search{width:130px}
   h2{font-size:17px}
+  .table-wrap{overflow-x:visible}
+  table{min-width:unset}
+  thead{display:none}
+  tbody tr{
+    display:grid;
+    grid-template-columns:1fr auto auto;
+    grid-template-rows:auto auto auto;
+    padding:10px 12px;
+    column-gap:8px;
+    row-gap:4px;
+    border-bottom:1px solid #f0f0f0;
+  }
+  tbody tr:last-child{border-bottom:none}
+  td{padding:0;vertical-align:unset}
+  td:nth-child(1){grid-row:2;grid-column:1/-1}
+  td:nth-child(2){grid-row:1;grid-column:1}
+  td:nth-child(3){display:none}
+  td:nth-child(4){grid-row:3;grid-column:1;font-size:12px;color:#888}
+  td:nth-child(5){display:none}
+  td:nth-child(6){grid-row:3;grid-column:2/-1;text-align:right;font-size:12px}
+  td:nth-child(7){grid-row:1;grid-column:2;text-align:right}
+  td:nth-child(8){grid-row:1;grid-column:3}
 }
 </style>
 </head>
@@ -150,7 +177,14 @@ td{padding:11px 12px;vertical-align:middle}
   <div class="table-wrap">
     <table>
       <thead><tr>
-        <th>LGE REF</th><th>업무유형</th><th>업무기한</th><th>마감일</th><th>연장</th><th>담당자</th><th>D-day</th><th>상태</th>
+        <th class="sortable" id="th-ref" onclick="setSortCol('ref')">LGE REF <span class="sort-icon">↕</span></th>
+        <th class="sortable" id="th-type" onclick="setSortCol('type')">업무유형 <span class="sort-icon">↕</span></th>
+        <th class="sortable" id="th-workDate" onclick="setSortCol('workDate')">업무기한 <span class="sort-icon">↕</span></th>
+        <th class="sortable" id="th-deadDate" onclick="setSortCol('deadDate')">마감일 <span class="sort-icon">↕</span></th>
+        <th>연장</th>
+        <th class="sortable" id="th-person" onclick="setSortCol('person')">담당자 <span class="sort-icon">↕</span></th>
+        <th class="sortable" id="th-dday" onclick="setSortCol('dday')">D-day <span class="sort-icon">↕</span></th>
+        <th class="sortable" id="th-status" onclick="setSortCol('status')">상태 <span class="sort-icon">↕</span></th>
       </tr></thead>
       <tbody id="tbody"></tbody>
     </table>
@@ -221,6 +255,8 @@ let items = [];
 let filter = '전체';
 let editIndex = -1;
 let openDropdownIdx = -1;
+let sortCol = 'deadDate';
+let sortDir = 'asc';
 
 /* ── 날짜 헬퍼 ── */
 function getDateSubtitle() {
@@ -389,17 +425,30 @@ async function changeStatus(idx, newStatus) {
   showToast('"'+newStatus+'" 상태로 변경했어요');
 }
 
+/* ── 정렬 ── */
+function setSortCol(col) {
+  if(sortCol===col) { sortDir=sortDir==='asc'?'desc':'asc'; }
+  else { sortCol=col; sortDir='asc'; }
+  render();
+}
+
 /* ── 렌더링 ── */
 function render() {
   const q=(document.getElementById('search').value||'').toLowerCase();
   let visible=filter==='전체'?items.slice():items.filter(function(i){ return i.type===filter; });
   if(q) visible=visible.filter(function(i){ return (i.ref||'').toLowerCase().includes(q)||(i.person||'').toLowerCase().includes(q); });
 
-  const active=items.filter(function(i){ return !isDone(i); });
+  const scoped=filter==='전체'?items:items.filter(function(i){ return i.type===filter; });
+  const active=scoped.filter(function(i){ return !isDone(i); });
   document.getElementById('s-urgent').textContent=active.filter(function(i){ const d=dday(i.deadDate||i.workDate); return d!==null&&d>=0&&d<=7; }).length;
   document.getElementById('s-soon').textContent=active.filter(function(i){ const d=dday(i.deadDate||i.workDate); return d!==null&&d>=0&&d<=30; }).length;
   document.getElementById('s-total').textContent=active.length;
-  document.getElementById('s-done').textContent=items.filter(function(i){ return isDone(i); }).length;
+  document.getElementById('s-done').textContent=scoped.filter(function(i){ return isDone(i); }).length;
+
+  // 헤더 정렬 아이콘 업데이트
+  document.querySelectorAll('thead th').forEach(function(th){ th.classList.remove('sort-active'); var ic=th.querySelector('.sort-icon'); if(ic) ic.textContent='↕'; });
+  var activeTh=document.getElementById('th-'+sortCol);
+  if(activeTh){ activeTh.classList.add('sort-active'); var ic=activeTh.querySelector('.sort-icon'); if(ic) ic.textContent=sortDir==='asc'?'↑':'↓'; }
 
   const empty=document.getElementById('empty'), tb=document.getElementById('tbody');
   if(visible.length===0){ tb.innerHTML=''; empty.style.display='block'; return; }
@@ -407,7 +456,20 @@ function render() {
 
   const sorted=visible.slice().sort(function(a,b){
     if(isDone(a)!==isDone(b)) return isDone(a)?1:-1;
-    return new Date(a.deadDate||a.workDate||'9999')-new Date(b.deadDate||b.workDate||'9999');
+    var va,vb;
+    if(sortCol==='dday'){
+      va=dday(a.deadDate||a.workDate); vb=dday(b.deadDate||b.workDate);
+      if(va===null) va=9999; if(vb===null) vb=9999;
+    } else if(sortCol==='status'){
+      va=STATUS_LIST.indexOf(a.status||'진행중'); vb=STATUS_LIST.indexOf(b.status||'진행중');
+    } else if(sortCol==='workDate'||sortCol==='deadDate'){
+      va=a[sortCol]||'9999'; vb=b[sortCol]||'9999';
+    } else {
+      va=(a[sortCol]||'').toLowerCase(); vb=(b[sortCol]||'').toLowerCase();
+    }
+    if(va<vb) return sortDir==='asc'?-1:1;
+    if(va>vb) return sortDir==='asc'?1:-1;
+    return 0;
   });
 
   tb.innerHTML=sorted.map(function(item){
