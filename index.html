@@ -98,6 +98,9 @@ thead th.sortable:hover{color:#555;background:#efefef}
 thead th.sort-active{color:#1a1a1a}
 .sort-icon{margin-left:3px;font-size:10px;opacity:0.35}
 thead th.sort-active .sort-icon{opacity:0.85}
+.ver-badge{font-size:10px;color:#bbb;margin-left:8px;font-weight:400;letter-spacing:0.02em}
+.sync-status{cursor:pointer}
+.sync-status:hover #sync-label{text-decoration:underline}
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center;padding:1rem}
 .modal-bg.open{display:flex}
 .modal{background:#fff;border-radius:16px;padding:1.5rem;width:440px;max-width:100%;border:1px solid #eee;max-height:90vh;overflow-y:auto}
@@ -142,10 +145,10 @@ thead th.sort-active .sort-icon{opacity:0.85}
 <div class="wrap">
   <div class="top">
     <div style="display:flex;align-items:baseline">
-      <h2>기한 관리<span class="sub" id="date-sub"></span></h2>
+      <h2>기한 관리<span class="sub" id="date-sub"></span><span class="ver-badge">v2.0.1</span></h2>
     </div>
     <div class="sync-row">
-      <div class="sync-status"><span class="dot loading" id="sync-dot"></span><span id="sync-label">연결 중...</span></div>
+      <div class="sync-status" onclick="openSheet()" title="구글 시트 열기"><span class="dot loading" id="sync-dot"></span><span id="sync-label">연결 중...</span></div>
       <button class="btn-sync" id="sync-btn" onclick="syncFromSheet()" disabled>새로고침</button>
       <button class="btn btn-danger" onclick="openDeleteDoneModal()">완료삭제</button>
       <button class="btn btn-primary" onclick="openModal(-1)">+ 추가</button>
@@ -177,11 +180,11 @@ thead th.sort-active .sort-icon{opacity:0.85}
   <div class="table-wrap">
     <table>
       <thead><tr>
-        <th class="sortable" id="th-ref" onclick="setSortCol('ref')">LGE REF <span class="sort-icon">↕</span></th>
+        <th class="sortable" id="th-ref" onclick="setSortCol('ref')">사건번호 <span class="sort-icon">↕</span></th>
         <th class="sortable" id="th-type" onclick="setSortCol('type')">업무유형 <span class="sort-icon">↕</span></th>
         <th class="sortable" id="th-workDate" onclick="setSortCol('workDate')">업무기한 <span class="sort-icon">↕</span></th>
         <th class="sortable" id="th-deadDate" onclick="setSortCol('deadDate')">마감일 <span class="sort-icon">↕</span></th>
-        <th>연장</th>
+        <th>연장/비고</th>
         <th class="sortable" id="th-person" onclick="setSortCol('person')">담당자 <span class="sort-icon">↕</span></th>
         <th class="sortable" id="th-dday" onclick="setSortCol('dday')">D-day <span class="sort-icon">↕</span></th>
         <th class="sortable" id="th-status" onclick="setSortCol('status')">상태 <span class="sort-icon">↕</span></th>
@@ -196,7 +199,7 @@ thead th.sort-active .sort-icon{opacity:0.85}
 <div class="modal-bg" id="modal-bg">
   <div class="modal">
     <h3 id="modal-title">기한 추가</h3>
-    <div class="form-row"><label>LGE REF</label><input id="f-ref" placeholder="예: 19LWW255KR01"></div>
+    <div class="form-row"><label>사건번호</label><input id="f-ref" placeholder="고객 Ref"></div>
     <div class="form-row"><label>업무유형</label>
       <select id="f-type">
         <option value="국내신건">국내신건</option>
@@ -213,8 +216,9 @@ thead th.sort-active .sort-icon{opacity:0.85}
     </div>
     <div class="form-row"><label>업무기한</label><input type="date" id="f-work"></div>
     <div class="form-row"><label>마감일 (법정기한)</label><input type="date" id="f-dead"></div>
-    <div class="form-row"><label>연장</label><input id="f-ext" placeholder="예: 2개월"></div>
-    <div class="form-row"><label>담당자</label><input id="f-person" placeholder="예: 손구영 책임님"></div>
+    <div style="text-align:right;margin:-4px 0 10px"><button type="button" class="btn" style="font-size:11px;padding:3px 10px" onclick="document.activeElement.blur()">확인</button></div>
+    <div class="form-row"><label>연장/비고</label><input id="f-ext" placeholder="예: 2개월"></div>
+    <div class="form-row"><label>담당자</label><input id="f-person" placeholder="XXX 책임님"></div>
     <div class="modal-btns-left">
       <div>
         <button class="btn btn-danger" id="modal-del-btn" onclick="deleteFromModal()" style="display:none">삭제</button>
@@ -243,6 +247,8 @@ thead th.sort-active .sort-icon{opacity:0.85}
 
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyIJo-Us95YZ0m5XGCkRiofb4eWA5YOBh0YVYJMvIzlidAFqt1CpKZ-FaChhhS-iu4oxg/exec';
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/16svkfRxaVy-Ffud2CCXgw7iGsfGBA08YYm9-GDfGCFQ/edit?gid=0#gid=0';
+function openSheet(){ window.open(SHEET_URL,'_blank'); }
 
 const STATUS_LIST = ['진행중','초안완','수정중','수정완','완료'];
 
@@ -517,7 +523,7 @@ function openModal(idx) {
     const ds=t.toISOString().slice(0,10);
     document.getElementById('f-work').value=ds;
     document.getElementById('f-dead').value=ds;
-    document.getElementById('f-type').value='국내OA';
+    document.getElementById('f-type').value=(filter!=='전체')?filter:'국내OA';
   }
   document.getElementById('modal-bg').classList.add('open');
   setTimeout(function(){ document.getElementById('f-ref').focus(); },100);
