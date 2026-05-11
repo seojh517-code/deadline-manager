@@ -255,14 +255,23 @@ const STATUS_LIST = ['진행중','초안완','수정중','수정완','완료'];
 // 완료가 아닌 상태 목록 (완료에서 되돌릴 때 선택지)
 const STATUS_ACTIVE = ['진행중','초안완','수정중','수정완'];
 
-const SOURCE = [{"ref":"19LWW255KR01D1D1","type":"국내OA","workDate":"2026-02-23","deadDate":"2026-04-23","ext":"","person":"손구영 책임님","status":"진행중","doneDate":""},{"ref":"20LWV082KR01D2","type":"국내OA","workDate":"2026-02-13","deadDate":"2026-04-02","ext":"","person":"김민철 책임님","status":"진행중","doneDate":""},{"ref":"20LWV082KR01D1","type":"국내OA","workDate":"2026-02-13","deadDate":"2026-04-02","ext":"","person":"김민철 책임님","status":"진행중","doneDate":""},{"ref":"19LWW256KR01D1D1","type":"국내OA","workDate":"2026-02-24","deadDate":"2026-04-14","ext":"","person":"손구영 책임님","status":"진행중","doneDate":""},{"ref":"19REF165KR01D1","type":"국내OA","workDate":"2026-04-10","deadDate":"2026-06-11","ext":"","person":"권영철 책임님","status":"진행중","doneDate":""},{"ref":"19LWW254KR01D1D1","type":"국내OA","workDate":"2026-05-14","deadDate":"2026-07-18","ext":"","person":"손구영 책임님","status":"진행중","doneDate":""},{"ref":"19LWW251EP03D1","type":"해외OA","workDate":"2025-12-11","deadDate":"2026-05-12","ext":"","person":"손구영 책임님","status":"진행중","doneDate":""},{"ref":"19LWW254EP03D1D1","type":"해외OA","workDate":"2026-01-07","deadDate":"2026-05-26","ext":"","person":"손구영 책임님","status":"진행중","doneDate":""},{"ref":"18REF068EP03D1D1","type":"해외OA","workDate":"2026-01-09","deadDate":"2026-06-17","ext":"","person":"권영철 책임님","status":"진행중","doneDate":""},{"ref":"19LWW254EP03D1D2","type":"해외OA","workDate":"","deadDate":"2026-06-03","ext":"","person":"손구영 책임님","status":"진행중","doneDate":""},{"ref":"20LWW069EP03D1","type":"해외OA","workDate":"2026-01-28","deadDate":"2026-06-17","ext":"","person":"손구영 책임님","status":"진행중","doneDate":""},{"ref":"20LWW069EP03D2","type":"해외OA","workDate":"2026-01-28","deadDate":"2026-06-24","ext":"","person":"손구영 책임님","status":"진행중","doneDate":""},{"ref":"20LWW069EP03D3","type":"해외OA","workDate":"2026-01-28","deadDate":"2026-06-17","ext":"","person":"손구영 책임님","status":"진행중","doneDate":""},{"ref":"20LWW069EP03D4","type":"해외OA","workDate":"2026-01-28","deadDate":"2026-06-17","ext":"","person":"손구영 책임님","status":"진행중","doneDate":""},{"ref":"20LWW069EP03D5","type":"해외OA","workDate":"2026-01-28","deadDate":"2026-06-17","ext":"","person":"손구영 책임님","status":"진행중","doneDate":""},{"ref":"20LWW069EP03D6","type":"해외OA","workDate":"2026-01-28","deadDate":"2026-06-17","ext":"","person":"손구영 책임님","status":"진행중","doneDate":""},{"ref":"19LWW257EP04D1","type":"해외OA","workDate":"2026-01-28","deadDate":"2026-06-17","ext":"","person":"손구영 책임님","status":"진행중","doneDate":""},{"ref":"14FREF018EP03D1","type":"해외OA","workDate":"2026-02-04","deadDate":"2026-04-05","ext":"","person":"권영철 책임님","status":"진행중","doneDate":""},{"ref":"25REF190EP03","type":"해외OA","workDate":"2026-03-03","deadDate":"2026-09-11","ext":"","person":"김도훈 책임님","status":"진행중","doneDate":""},{"ref":"19LWW245CN04D1","type":"해외OA","workDate":"2026-03-27","deadDate":"2026-04-24","ext":"","person":"손구영 책임님","status":"진행중","doneDate":""},{"ref":"19LWW260CN04D1","type":"해외OA","workDate":"2026-03-21","deadDate":"2026-04-18","ext":"","person":"손구영 책임님","status":"진행중","doneDate":""},{"ref":"19LWW260CN04D2","type":"해외OA","workDate":"2026-03-21","deadDate":"2026-04-18","ext":"","person":"손구영 책임님","status":"진행중","doneDate":""},{"ref":"22LWP090US02","type":"해외OA","workDate":"2026-03-25","deadDate":"2026-04-22","ext":"","person":"배원직 책임님","status":"진행중","doneDate":""},{"ref":"24REF176EP03","type":"해외OA","workDate":"2026-04-09","deadDate":"2026-07-10","ext":"","person":"김도훈 책임님","status":"진행중","doneDate":""},{"ref":"25REF131EP03","type":"해외OA","workDate":"2026-04-09","deadDate":"2026-07-10","ext":"","person":"김도훈 책임님","status":"진행중","doneDate":""},{"ref":"19LWW253US03C2","type":"해외OA","workDate":"2026-04-04","deadDate":"2026-05-02","ext":"","person":"손구영 책임님","status":"진행중","doneDate":""},{"ref":"19LWW254EP03D1","type":"해외OA","workDate":"2026-04-20","deadDate":"2026-06-02","ext":"","person":"손구영 책임님","status":"진행중","doneDate":""},{"ref":"19LWW258CN04D1","type":"해외OA","workDate":"2026-05-12","deadDate":"2026-06-11","ext":"","person":"손구영 책임님","status":"진행중","doneDate":""},{"ref":"19LWW267CN05D2","type":"해외OA","workDate":"2026-05-06","deadDate":"2026-06-03","ext":"","person":"손구영 책임님","status":"진행중","doneDate":""},{"ref":"19LWW267CN05D3","type":"해외OA","workDate":"2026-05-07","deadDate":"2026-06-04","ext":"","person":"손구영 책임님","status":"진행중","doneDate":""},{"ref":"22LWP090EP04","type":"해외OA","workDate":"2026-05-13","deadDate":"2026-07-02","ext":"","person":"배원직 책임님","status":"진행중","doneDate":""},{"ref":"19LWW254US02C1","type":"해외OA","workDate":"2026-05-14","deadDate":"2026-06-11","ext":"","person":"손구영 책임님","status":"진행중","doneDate":""},{"ref":"19LWW253US03C1","type":"해외등록검토","workDate":"2026-01-16","deadDate":"","ext":"","person":"","status":"진행중","doneDate":""},{"ref":"19LWW253EP04D1D1","type":"해외분할","workDate":"2026-01-23","deadDate":"2026-05-23","ext":"","person":"손구영 책임님","status":"진행중","doneDate":""}];
-
 let items = [];
 let filter = '전체';
 let editIndex = -1;
 let openDropdownIdx = -1;
 let sortCol = 'deadDate';
 let sortDir = 'asc';
+let isSaving = false;
+
+/* ── 중복 제거 ── */
+function dedup(arr) {
+  var seen = new Set();
+  return arr.filter(function(item) {
+    var key = (item.ref||'')+'|'+(item.type||'')+'|'+(item.workDate||'')+'|'+(item.deadDate||'');
+    if(seen.has(key)) return false;
+    seen.add(key); return true;
+  });
+}
 
 /* ── 날짜 헬퍼 ── */
 function getDateSubtitle() {
@@ -330,9 +339,8 @@ async function syncFromSheet() {
     const data=await res.json();
     if(data.error) throw new Error(data.error);
     if(data.items&&data.items.length>0) {
-      items=data.items.map(function(r){
-        // 기존 done 필드 → status 필드로 마이그레이션
-        let status=r.status||'';
+      var raw=data.items.map(function(r){
+        var status=r.status||'';
         if(!status) {
           status=(r.done==='TRUE'||r.done===true||r.done==='true')?'완료':'진행중';
         }
@@ -343,8 +351,16 @@ async function syncFromSheet() {
           status:status, doneDate:r.doneDate||''
         };
       });
+      var deduped=dedup(raw);
+      var removed=raw.length-deduped.length;
+      items=deduped;
       setStatus('ok','구글 시트 연동됨');
-      showToast('시트에서 '+items.length+'건 불러왔어요');
+      if(removed>0) {
+        showToast('중복 '+removed+'건 자동 정리 후 '+items.length+'건 불러왔어요');
+        await pushToSheet();
+      } else {
+        showToast('시트에서 '+items.length+'건 불러왔어요');
+      }
     } else {
       setStatus('ok','구글 시트 연동됨');
       showToast('데이터가 없어요. + 추가로 입력해주세요');
@@ -359,6 +375,8 @@ async function syncFromSheet() {
 }
 
 async function pushToSheet() {
+  if(isSaving) return;
+  isSaving=true;
   setStatus('loading','저장 중...');
   try {
     const res=await fetch(GAS_URL,{
@@ -372,6 +390,8 @@ async function pushToSheet() {
   } catch(e) {
     setStatus('err','저장 실패');
     showToast('저장 실패. 다시 시도해주세요.');
+  } finally {
+    isSaving=false;
   }
 }
 
